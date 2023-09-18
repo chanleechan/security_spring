@@ -14,10 +14,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
   sql:
     init:
       mode: never
       encoding: UTF-8
+
+  thymeleaf:
+    prefix: classpath:templates/
+    suffix: .html
+    mode: HTML
+    check-template-location: true
+    cache: true
+    order: 0
 
 logging:
   level:

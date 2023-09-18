@@ -16,11 +16,21 @@ public class LoginController {
 
     @PostMapping("/user")
     public ResponseEntity<String> userLogin(String userId, String pw) {
-        boolean userValidation = userService.existUser(userId, pw);
+        boolean userValidation = userService.existUser(userId);
         if (userValidation) {
             return ResponseEntity.ok("success");
         } else {
             return ResponseEntity.badRequest().body("fail");
         }
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<String> join(String userId, String password) {
+        if (userId.isEmpty() || password.isEmpty()) {
+            throw new IllegalArgumentException("가입하려는 정보가 유효하지 않습니다.");
+        } else {
+            return ResponseEntity.ok(userService.save(userId, password));
+        }
+
     }
 }
