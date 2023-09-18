@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/front-layout}">
 <head>
-
+    <script th:src="@{/js/front/front.js}"></script>
 </head>
 <div layout:fragment="content">
     로긴 성콩
@@ -15,5 +15,7 @@
     유저 비밀번호
     <br>
     <input type="text" th:value="${user.getPassword()}">
+    <br>
+    <button type="button" id="logoutBtn">로그아웃</button>
 </div>
 </html>

@@ -7,6 +7,10 @@ $(() => {
         join();
     });
 
+    $("#logoutBtn").click(() => {
+        logout();
+    });
+
 });
 
 
@@ -46,4 +50,8 @@ function joinValidationCheck() {
     check = (id ?? true) !== "" && (pass ?? true) !== "" && (repass ?? true) !== "";
     if (check === false) return check;
     return pass === repass;
+}
+
+function logout() {
+    location.href = "/user/logout";
 }
