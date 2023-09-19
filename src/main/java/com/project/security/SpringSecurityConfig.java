@@ -15,6 +15,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SpringSecurityConfig {
     private final SecurityService userService;
+    private final AuthenticationFailureHandlerCustom failureHandler;
+    private final AuthenticationSuccessHandlerCustom successHandler;
 
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
@@ -34,7 +36,10 @@ public class SpringSecurityConfig {
                         .loginPage("/user/login")
                         .usernameParameter("userId")
                         .passwordParameter("pw")
-                        .defaultSuccessUrl("/user/userInfo", true)
+                        .loginProcessingUrl("/login/user")
+                        .failureHandler(failureHandler)
+                        .successHandler(successHandler)
+                        /*.defaultSuccessUrl("/user/userInfo", false)*/
                         .permitAll()
                 )
                 .logout(Customizer.withDefaults());

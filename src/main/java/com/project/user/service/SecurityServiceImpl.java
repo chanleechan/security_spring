@@ -17,7 +17,7 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public SecurityUser loadUserByUsername(String userId) throws UsernameNotFoundException {
         Optional<User> user = userRepository.findByUserId(userId);
-        user.orElseThrow(() -> new IllegalArgumentException("not found user"));
+        user.orElseThrow(() -> new IllegalArgumentException("UsernameNotFound"));
 
         SecurityUser securityUser = new SecurityUser(user.get());
 

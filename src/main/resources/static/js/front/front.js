@@ -11,13 +11,15 @@ $(() => {
         logout();
     });
 
+    $("#loginBtn").click(() => {
+        login();
+    });
 });
 
 
 function joinLocation() {
     location.href = "/user/join";
 }
-
 
 function join() {
     if (joinValidationCheck()) {
@@ -37,7 +39,22 @@ function join() {
     } else {
         alert("조건이 맞지 않습니다.");
     }
+}
 
+function login() {
+    let param = $("#loginForm").serialize();
+
+    $.ajax({
+        type: "post",
+        url: "/login/user",
+        data: param,
+        success: ((data) => {
+            data === "success" ? location.href = "/user/login" : "";
+        }), error(e) {
+            alert(e.responseText);
+            $("#loginForm")[0].reset();
+        }
+    })
 }
 
 

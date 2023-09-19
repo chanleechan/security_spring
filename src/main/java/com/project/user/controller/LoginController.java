@@ -14,6 +14,16 @@ public class LoginController {
 
     private final UserService userService;
 
+    @PostMapping("/user")
+    public ResponseEntity<String> userLogin(String userId, String pw) {
+        boolean userValidation = userService.existUser(userId);
+        if (userValidation) {
+            return ResponseEntity.ok("success");
+        } else {
+            return ResponseEntity.badRequest().body("fail");
+        }
+    }
+
     @PostMapping("/join")
     public ResponseEntity<String> join(String userId, String password) {
         if (userId.isEmpty() || password.isEmpty()) {
