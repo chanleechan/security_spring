@@ -15,7 +15,7 @@ public class AuthenticationFailureHandlerCustom implements AuthenticationFailure
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        //에러코드 매핑하는 로직 점검 필요 임시로 파싱
+        //TODO : 에러코드 매핑하는 로직 점검 필요 임시로 파싱
         String errorMsg = responseMsg(exception.getMessage());
         /*errorMsg = URLEncoder.encode(errorMsg, "UTF-8");*/
 

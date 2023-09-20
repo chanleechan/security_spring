@@ -27,6 +27,10 @@ spring:
     check-template-location: true
     cache: true
     order: 0
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+    date-format: "yyyy-MM-dd HH:mm:ss"
 
 logging:
   level:
@@ -37,3 +41,9 @@ logging:
 
 server:
   port: 8081
+
+jwt:
+  secret: and0LXRlc3QtYWxqamFiYWVnaS1qd3QtdGVzdC1hbGpqYWJhZWdpLWp3dC10ZXN0LWFsamphYmFlZ2ktand0LXRlc3QtYWxqamFiYWVnaS1qd3QtdGVzdC1hbGpqYWJhZWdpLWp3dC10ZXN0LWFsamphYmFlZ2ktand0LXRlc3QtYWxqamFiYWVnaS1qd3QtdGVzdC1hbGpqYWJhZWdp
+  expiration: 86400000
+  tokenPrefix: Bearer
+  header: Authorization
