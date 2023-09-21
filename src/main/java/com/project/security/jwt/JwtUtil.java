@@ -1,10 +1,13 @@
 package com.project.security.jwt;
 
+import com.project.security.jwt.dto.Token;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -12,7 +15,9 @@ import java.util.Base64;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
+    private final UserDetailsService userDetailsService;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -30,10 +35,7 @@ public class JwtUtil {
     }
 
     private static Claims extractClaims(String token, String secretKey) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token)
-                .getBody();
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
     public static boolean isExpired(String token, String secretKey) {
@@ -42,19 +44,32 @@ public class JwtUtil {
         return expiredDate.before(new Date());
     }
 
-    public String createToken(String loginId) {
+    public Token createToken(String loginId) {
         // Claim = Jwt Token에 들어갈 정보
         // Claim에 loginId를 넣어 줌으로써 나중에 loginId를 꺼낼 수 있음
         Claims claims = Jwts.claims();
         claims.put("loginId", loginId);
 
-        return Jwts.builder()
+        String accessToken = Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
                 .signWith(setKey(), SignatureAlgorithm.HS512)
                 .compact();
+        String refreshToken = Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
+                .signWith(setKey(), SignatureAlgorithm.HS512)
+                .compact();
+
+        return Token.builder().accessToken(accessToken).refreshToken(refreshToken).key(loginId).build();
     }
+
+    /*public Authentication getAuthentication(String token) {
+        UserDetails user = userDetailsService.loadUserByUsername(tokenGetLoginId(token, secret));
+
+    }*/
 
 
 }

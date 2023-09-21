@@ -1,8 +1,8 @@
 package com.project.user.service;
 
-import com.project.user.domain.User;
-import com.project.user.domain.UserRepository;
+import com.project.user.domain.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.NoSuchElementException;
@@ -13,16 +13,20 @@ import java.util.NoSuchElementException;
 public class UserService {
 
     private final UserRepository user;
-    //private final BCryptPasswordEncoder encoder;
+    private final UserAuthRepository userAuth;
+    private final UserAuthService userAuthService;
+    private final BCryptPasswordEncoder encoder;
 
     public boolean existUser(String userId) {
         return user.existsByUserId(userId);
     }
 
-   /* public String save(String userId, String password) {
+    public String save(String userId, String password) {
         if (!existUser(userId)) {
             try {
-                user.save(User.create(userId, encoder.encode(password), ""));
+                User u = user.save(User.create(userId, encoder.encode(password), ""));
+                AuthCode code = userAuthService.findByAuthCode("01");
+                userAuth.save(new UserAuth(u, code));
                 return "success";
             } catch (Exception e) {
                 return e.getMessage();
@@ -31,11 +35,9 @@ public class UserService {
         } else {
             return "중복 회원이 있습니다.";
         }
-    }*/
+    }
 
     public User findByUserId(String userId) {
         return user.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("UsernameNotFound"));
     }
-
-
 }

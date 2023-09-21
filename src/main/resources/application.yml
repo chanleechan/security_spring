@@ -34,10 +34,8 @@ spring:
 
 logging:
   level:
-    org:
-      hibernate:
-        SQL: debug
-    root: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace
 
 server:
   port: 8081

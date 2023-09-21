@@ -1,14 +1,11 @@
 package com.project.security;
 
 import com.project.security.jwt.JwtFilter;
-import com.project.security.jwt.JwtUtil;
 import com.project.user.service.SecurityService;
-import com.project.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,10 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfig {
     private final SecurityService userService;
-    private final UserService service;
-    private final AuthenticationFailureHandlerCustom failureHandler;
-    private final AuthenticationSuccessHandlerCustom successHandler;
-    private final JwtUtil util;
+    private final AuthenticationFailureHandlerCustom failureHandlerCustom;
+
     @Value("${jwt.secret}")
     String secretKey;
 
@@ -59,15 +54,33 @@ public class SpringSecurityConfig {
         // JWT 토큰 사용할 경우
         http.httpBasic().disable().csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().addFilterBefore(new JwtFilter(secretKey, service), UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests().requestMatchers("/login/user").authenticated()
-                .requestMatchers("/", "/images/**", "/user/login", "/login/join", "/user/join", "/js/**").permitAll();
-
+                .and()
+                .addFilterBefore(new JwtFilter(secretKey, userService), UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests()
+                .requestMatchers("/login/user").authenticated()
+                .requestMatchers("/", "/images/**", "/user/login", "/login/join", "/user/join", "/js/**")
+                .permitAll()
+                .and()
+                .exceptionHandling()
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    // 권한 문제가 발생했을 때 이 부분을 호출한다.
+                    response.setStatus(403);
+                    response.setCharacterEncoding("utf-8");
+                    response.setContentType("text/html; charset=UTF-8");
+                    response.getWriter().write("권한이 없는 사용자입니다.");
+                })
+                .authenticationEntryPoint((request, response, authException) -> {
+                    // 인증문제가 발생했을 때 이 부분을 호출한다.
+                    response.setStatus(401);
+                    response.setCharacterEncoding("utf-8");
+                    response.setContentType("text/html; charset=UTF-8");
+                    response.getWriter().write("인증되지 않은 사용자입니다.");
+                });
         return http.build();
     }
 
 
-    @Bean
+   /* @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() throws Exception {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
 
@@ -75,6 +88,6 @@ public class SpringSecurityConfig {
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
 
         return daoAuthenticationProvider;
-    }
+    }*/
 
 }
