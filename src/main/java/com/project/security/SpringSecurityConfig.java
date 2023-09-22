@@ -1,6 +1,7 @@
 package com.project.security;
 
-import com.project.security.jwt.JwtFilter;
+import com.project.security.jwt.component.AuthenticationFailureHandlerCustom;
+import com.project.security.jwt.component.JwtFilter;
 import com.project.user.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,9 +58,9 @@ public class SpringSecurityConfig {
                 .and()
                 .addFilterBefore(new JwtFilter(secretKey, userService), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests()
-                .requestMatchers("/login/user").authenticated()
                 .requestMatchers("/", "/images/**", "/user/login", "/login/join", "/user/join", "/js/**")
                 .permitAll()
+                .requestMatchers("/login/user").authenticated()
                 .and()
                 .exceptionHandling()
                 .accessDeniedHandler((request, response, accessDeniedException) -> {

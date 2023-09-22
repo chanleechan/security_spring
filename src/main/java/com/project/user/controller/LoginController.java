@@ -1,6 +1,6 @@
 package com.project.user.controller;
 
-import com.project.security.jwt.JwtUtil;
+import com.project.security.jwt.component.JwtUtil;
 import com.project.security.jwt.dto.Token;
 import com.project.user.dto.ApiResponse;
 import com.project.user.service.UserService;

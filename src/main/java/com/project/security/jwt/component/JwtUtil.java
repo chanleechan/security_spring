@@ -1,6 +1,7 @@
-package com.project.security.jwt;
+package com.project.security.jwt.component;
 
 import com.project.security.jwt.dto.Token;
+import com.project.user.domain.JwtRefreshToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,11 +22,13 @@ public class JwtUtil {
 
     @Value("${jwt.secret}")
     private String secret;
+    @Value("${jwt.refreshSecret}")
+    private String refreshSecret;
 
     @Value("${jwt.expiration}")
     private long tokenValidityInMilliseconds;
 
-    public Key setKey() {
+    public Key setKey(String secret) {
         byte[] keyBytes = Base64.getDecoder().decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -50,26 +53,48 @@ public class JwtUtil {
         Claims claims = Jwts.claims();
         claims.put("loginId", loginId);
 
-        String accessToken = Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
-                .signWith(setKey(), SignatureAlgorithm.HS512)
-                .compact();
-        String refreshToken = Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
-                .signWith(setKey(), SignatureAlgorithm.HS512)
-                .compact();
+        String accessToken = createAccessToken(claims, tokenValidityInMilliseconds);
+        String refreshToken = createRefreshToken(claims, tokenValidityInMilliseconds);
 
         return Token.builder().accessToken(accessToken).refreshToken(refreshToken).key(loginId).build();
     }
 
-    /*public Authentication getAuthentication(String token) {
-        UserDetails user = userDetailsService.loadUserByUsername(tokenGetLoginId(token, secret));
+    private String createAccessToken(Claims claims, long tokenValidityInMilliseconds) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
+                .signWith(setKey(secret), SignatureAlgorithm.HS512)
+                .compact();
+    }
 
-    }*/
+    private String createRefreshToken(Claims claims, long tokenValidityInMilliseconds) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidityInMilliseconds))
+                .signWith(setKey(refreshSecret), SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String validateRefreshToken(JwtRefreshToken refresh) {
+
+        String refreshToken = refresh.getRefreshToken();
+        try {
+            Claims claims = extractClaims(refreshToken, refreshSecret);
+            if (!claims.getExpiration().before(new Date())) {
+                return recreateAccessToken(claims.get("loginId").toString());
+            }
+        } catch (Exception e) {
+            return "";
+        }
+        return "";
+    }
+
+    public String recreateAccessToken(String loginId) {
+        Claims claims = Jwts.claims().setSubject(loginId);
+        return createAccessToken(claims, tokenValidityInMilliseconds);
+    }
 
 
 }

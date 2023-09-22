@@ -1,7 +1,7 @@
 package com.java.project.security.test;
 
 import com.project.TestApplication;
-import com.project.security.jwt.JwtUtil;
+import com.project.security.jwt.component.JwtUtil;
 import com.project.security.jwt.dto.Token;
 import com.project.user.domain.AuthCode;
 import com.project.user.domain.User;

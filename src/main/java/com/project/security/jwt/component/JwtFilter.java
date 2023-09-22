@@ -1,4 +1,4 @@
-package com.project.security.jwt;
+package com.project.security.jwt.component;
 
 import com.project.user.domain.SecurityUser;
 import com.project.user.service.SecurityService;

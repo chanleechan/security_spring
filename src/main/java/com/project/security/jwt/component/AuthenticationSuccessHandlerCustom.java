@@ -1,4 +1,4 @@
-package com.project.security;
+package com.project.security.jwt.component;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
