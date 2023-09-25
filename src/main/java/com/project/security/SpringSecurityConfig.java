@@ -1,7 +1,9 @@
 package com.project.security;
 
-import com.project.security.jwt.component.AuthenticationFailureHandlerCustom;
+import com.project.security.jwt.component.AccessDeniedHandlerCustom;
+import com.project.security.jwt.component.AuthenticationEntryPointHandlerCustom;
 import com.project.security.jwt.component.JwtFilter;
+import com.project.security.jwt.component.JwtUtil;
 import com.project.user.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +19,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SpringSecurityConfig {
     private final SecurityService userService;
-    private final AuthenticationFailureHandlerCustom failureHandlerCustom;
+    private final AccessDeniedHandlerCustom accessDeniedHandlerCustom;
+    private final AuthenticationEntryPointHandlerCustom authenticationEntryPointHandlerCustom;
+    private final JwtUtil util;
 
     @Value("${jwt.secret}")
     String secretKey;
@@ -31,64 +35,22 @@ public class SpringSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         //.csrf().disable().cors().disable() -> 실제 운영환경 에서는 삭제 고려
-
-       /* 시큐리티만 사용할 경우
-       http.csrf().disable().cors().disable()
-                .authorizeHttpRequests(authorize -> authorize
-                        .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
-                        .requestMatchers("/images/**", "/user/login", "/login/join", "/user/join", "/js/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .formLogin(formLogin -> formLogin
-                        .loginPage("/user/login")
-                        .usernameParameter("userId")
-                        .passwordParameter("pw")
-                        .loginProcessingUrl("/login/user")
-                        .failureHandler(failureHandler)
-                        .successHandler(successHandler)
-                        *//*.defaultSuccessUrl("/user/userInfo", false)*//*
-                        .permitAll()
-                )
-                .logout(Customizer.withDefaults());
-                */
-
         // JWT 토큰 사용할 경우
         http.httpBasic().disable().csrf().disable()
+                //세션 사용 안함
+                //유저 패스워드 필터 접근 전 Jwt 필터로 접근
+                .addFilterBefore(new JwtFilter(secretKey, userService, util), UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(request -> {
+                    request.requestMatchers("/", "/images/**", "/user/login", "/user/logout", "/login/join", "/login/user", "/user/join", "/js/**", "/token/**", "/favicon")
+                            .permitAll()
+                            .anyRequest().authenticated();
+                })
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .addFilterBefore(new JwtFilter(secretKey, userService), UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests()
-                .requestMatchers("/", "/images/**", "/user/login", "/login/join", "/user/join", "/js/**")
-                .permitAll()
-                .requestMatchers("/login/user").authenticated()
-                .and()
                 .exceptionHandling()
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    // 권한 문제가 발생했을 때 이 부분을 호출한다.
-                    response.setStatus(403);
-                    response.setCharacterEncoding("utf-8");
-                    response.setContentType("text/html; charset=UTF-8");
-                    response.getWriter().write("권한이 없는 사용자입니다.");
-                })
-                .authenticationEntryPoint((request, response, authException) -> {
-                    // 인증문제가 발생했을 때 이 부분을 호출한다.
-                    response.setStatus(401);
-                    response.setCharacterEncoding("utf-8");
-                    response.setContentType("text/html; charset=UTF-8");
-                    response.getWriter().write("인증되지 않은 사용자입니다.");
-                });
+                .accessDeniedHandler(accessDeniedHandlerCustom)
+                .authenticationEntryPoint(authenticationEntryPointHandlerCustom);
         return http.build();
     }
-
-
-   /* @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider() throws Exception {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-
-        daoAuthenticationProvider.setUserDetailsService(userService);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-
-        return daoAuthenticationProvider;
-    }*/
 
 }

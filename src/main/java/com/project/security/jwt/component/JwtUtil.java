@@ -3,12 +3,12 @@ package com.project.security.jwt.component;
 import com.project.security.jwt.dto.Token;
 import com.project.user.domain.JwtRefreshToken;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -18,40 +18,43 @@ import java.util.Date;
 @Component
 @RequiredArgsConstructor
 public class JwtUtil {
-    private final UserDetailsService userDetailsService;
 
     @Value("${jwt.secret}")
-    private String secret;
+    private static String secret;
     @Value("${jwt.refreshSecret}")
-    private String refreshSecret;
+    private static String refreshSecret;
 
     @Value("${jwt.expiration}")
-    private long tokenValidityInMilliseconds;
+    private static long tokenValidityInMilliseconds;
 
+    //Key 생성
     public Key setKey(String secret) {
         byte[] keyBytes = Base64.getDecoder().decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public static String tokenGetLoginId(String token, String secretKey) {
-        return extractClaims(token, secretKey).get("loginId").toString();
+    //토큰을 이용해 loginId 추출
+    public String tokenGetLoginId(String token, String secretKey) {
+        return getClaims(token, secretKey).get("loginId").toString();
     }
 
-    private static Claims extractClaims(String token, String secretKey) {
+    //클레임 추출
+    public Claims getClaims(String token, String secretKey) {
         return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
-    public static boolean isExpired(String token, String secretKey) {
-        Date expiredDate = extractClaims(token, secretKey).getExpiration();
+    //토큰 만료시간 체크
+    public boolean tokenIsExpired(String token, String secretKey) {
+        Date expiredDate = getClaims(token, secretKey).getExpiration();
         // Token의 만료 날짜가 지금보다 이전인지 check
         return expiredDate.before(new Date());
     }
 
+    //토큰 생성 accessToken , refreshToken
     public Token createToken(String loginId) {
-        // Claim = Jwt Token에 들어갈 정보
-        // Claim에 loginId를 넣어 줌으로써 나중에 loginId를 꺼낼 수 있음
         Claims claims = Jwts.claims();
         claims.put("loginId", loginId);
+        claims.put("roles", "member");
 
         String accessToken = createAccessToken(claims, tokenValidityInMilliseconds);
         String refreshToken = createRefreshToken(claims, tokenValidityInMilliseconds);
@@ -59,7 +62,9 @@ public class JwtUtil {
         return Token.builder().accessToken(accessToken).refreshToken(refreshToken).key(loginId).build();
     }
 
-    private String createAccessToken(Claims claims, long tokenValidityInMilliseconds) {
+    //엑세스 토큰 생성
+    public String createAccessToken(Claims claims, long tokenValidityInMilliseconds) {
+        claims.put("type", "access");
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -68,7 +73,9 @@ public class JwtUtil {
                 .compact();
     }
 
-    private String createRefreshToken(Claims claims, long tokenValidityInMilliseconds) {
+    //리프레쉬 토큰 생성
+    public String createRefreshToken(Claims claims, long tokenValidityInMilliseconds) {
+        claims.put("type", "refresh");
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -77,15 +84,16 @@ public class JwtUtil {
                 .compact();
     }
 
+    //리프레쉬 토큰 검증
     public String validateRefreshToken(JwtRefreshToken refresh) {
 
         String refreshToken = refresh.getRefreshToken();
         try {
-            Claims claims = extractClaims(refreshToken, refreshSecret);
+            Claims claims = getClaims(refreshToken, refreshSecret);
             if (!claims.getExpiration().before(new Date())) {
                 return recreateAccessToken(claims.get("loginId").toString());
             }
-        } catch (Exception e) {
+        } catch (ExpiredJwtException e) {
             return "";
         }
         return "";
@@ -95,6 +103,4 @@ public class JwtUtil {
         Claims claims = Jwts.claims().setSubject(loginId);
         return createAccessToken(claims, tokenValidityInMilliseconds);
     }
-
-
 }

@@ -4,6 +4,7 @@ import com.project.security.jwt.component.JwtUtil;
 import com.project.security.jwt.dto.Token;
 import com.project.security.jwt.service.JwtService;
 import com.project.user.domain.*;
+import com.project.user.dto.ApiResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,7 +29,7 @@ public class UserService {
     }
 
     @Transactional
-    public String save(String userId, String password) {
+    public ApiResponse save(String userId, String password) {
         if (!existUser(userId)) {
             try {
                 User u = user.save(User.create(userId, encoder.encode(password), ""));
@@ -36,13 +37,12 @@ public class UserService {
                 userAuth.save(new UserAuth(u, code));
                 Token token = jwtUtil.createToken(userId);
                 jwtService.refreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
-                return "success";
+                return ApiResponse.create("success", token);
             } catch (Exception e) {
-                return e.getMessage();
+                return ApiResponse.create("fail", e.getMessage());
             }
-
         } else {
-            return "중복 회원이 있습니다.";
+            return ApiResponse.create("fail", "중복 회원이 있습니다.");
         }
     }
 

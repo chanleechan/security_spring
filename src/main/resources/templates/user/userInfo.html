@@ -10,11 +10,11 @@
     <br>
     유저 아이디
     <br>
-    <input type="text" th:value="${user.getUserId()}">
+    <input type="text" th:value="${user == null ? '' : user.getUserId()}">
     <br>
     유저 비밀번호
     <br>
-    <input type="text" th:value="${user.getPassword()}">
+    <input type="text" th:value="${user == null ? '' :user.getPassword()}">
     <br>
     <button type="button" id="logoutBtn">로그아웃</button>
 </div>

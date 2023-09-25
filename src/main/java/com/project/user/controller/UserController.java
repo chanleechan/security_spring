@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
@@ -26,7 +27,10 @@ public class UserController {
     }
 
     @GetMapping("/userInfo")
-    public String userInfo(@AuthenticationPrincipal SecurityUser user, Model model) {
+    public String userInfo(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        SecurityUser user = (SecurityUser) authentication.getPrincipal();
+
         model.addAttribute("user", user);
         return "user/userInfo";
     }
@@ -37,9 +41,10 @@ public class UserController {
     }
 
     @GetMapping("/logout")
-    public String logout(HttpServletRequest req, HttpServletResponse res) {
+    public String logout(HttpServletRequest req, HttpServletResponse res, @AuthenticationPrincipal SecurityUser user) {
         new SecurityContextLogoutHandler().logout(req, res,
                 SecurityContextHolder.getContext().getAuthentication());
+
         return "redirect:/user/login";
     }
 

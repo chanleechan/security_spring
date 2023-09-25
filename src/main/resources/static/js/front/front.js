@@ -49,7 +49,7 @@ function login() {
         url: "/login/user",
         data: param,
         success: ((data) => {
-            data === "success" ? location.href = "/user/login" : "";
+            data.msg === "success" ? location.href = "/user/userInfo" : "";
         }), error(e) {
             alert(e.responseText);
             $("#loginForm")[0].reset();

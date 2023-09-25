@@ -17,7 +17,8 @@ public class TokenController {
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse> validateRefreshToken(HttpServletRequest request) {
-        String refreshToken = request.getHeader("refresh_token");
+        String refreshToken = service.getToken(service.getTokenCookie(request, "refreshToken"));
+        /*String refreshToken = request.getHeader("refreshToken");*/
         try {
             return ResponseEntity.ok(service.validateRefreshToken(refreshToken));
         } catch (Exception e) {
