@@ -18,6 +18,10 @@ $(() => {
     $("#refresh").click(() => {
         refresh();
     });
+
+    $("#test").click(() => {
+        reissue();
+    });
 });
 
 
@@ -82,6 +86,18 @@ function refresh() {
     $.ajax({
         type: "post",
         url: "/token/refresh",
+        success: ((data) => {
+            console.log(data);
+        }), error(e) {
+            console.log(e);
+        }
+    })
+}
+
+function reissue() {
+    $.ajax({
+        type: "get",
+        url: "/token/test",
         success: ((data) => {
             console.log(data);
         }), error(e) {

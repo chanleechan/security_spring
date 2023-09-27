@@ -52,7 +52,7 @@ class TestApplicationTests {
         System.out.println(token.getRefreshToken());
         System.out.println(token.getUserId());
     }
-    
+
     @Test
     void redisSave() {
         RefreshToken token = refreshTokenRepository.save(RefreshToken.create("eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbklkIjoiY2NjIiwicm9sZXMiOiJtZW1iZXIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTY5NTY5MTg3MSwiZXhwIjoxNjk1Nzc4MjcxfQ.S0uGU8LgDP02Oh9fjuASs6oBtKgw-Blt8WMhfIuQQjJDFG1WDWw9mVlJrmdDhAjnEErv5GK1e_jSOezF2nMAgA", "ccc"));
@@ -65,6 +65,12 @@ class TestApplicationTests {
         RefreshToken token = refreshTokenRepository.findById("chanchan").get();
         token.update("chan");
         refreshTokenRepository.save(token);
+    }
+
+    @Test
+    void deleteRefreshToken() {
+        String refreshToken = "eyJhbGciOiJIUzUxMiJ9.eyJsb2dpbklkIjoiY2NjIiwicm9sZXMiOiJtZW1iZXIiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTY5NTc5MjAyMSwiZXhwIjoxNjk1ODc4NDIxfQ.NddpHguhL-WdoWIPf_JT_r0SBkQlAhjqkJSbeoYOG_eD1Y2m0i0fI0odcmstv2GG2CzQsYChqC0MDqmPRRVGWg";
+        refreshTokenRepository.deleteById(refreshToken);
     }
 
 

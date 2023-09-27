@@ -3,7 +3,6 @@ package com.project.security.jwt.component;
 import com.project.redis.domain.RefreshToken;
 import com.project.redis.domain.RefreshTokenRepository;
 import com.project.security.jwt.dto.Token;
-import com.project.user.domain.JwtRefreshToken;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,6 +10,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -28,7 +28,6 @@ public class JwtUtil {
 
     @Value("${jwt.expiration}")
     private long tokenValidityInMilliseconds;
-
     private final RefreshTokenRepository refreshTokenRepository;
 
     //Key 생성
@@ -94,19 +93,9 @@ public class JwtUtil {
                 .compact();
     }
 
-    //리프레쉬 토큰 검증
-    public String validateRefreshToken(JwtRefreshToken refresh) {
-
-        String refreshToken = refresh.getRefreshToken();
-        try {
-            Claims claims = getClaims(refreshToken, refreshSecret);
-            if (!claims.getExpiration().before(new Date())) {
-                return recreateAccessToken(claims.get("loginId").toString());
-            }
-        } catch (ExpiredJwtException e) {
-            return "";
-        }
-        return "";
+    //리프레쉬 토큰 삭제
+    public void deleteRefreshToken(String refreshToken) {
+        refreshTokenRepository.deleteById(refreshToken);
     }
 
     public String validateRedisRefreshToken(RefreshToken refresh) {
@@ -129,4 +118,28 @@ public class JwtUtil {
         refreshTokenRepository.save(RefreshToken.create(token, loginId));
         return token;
     }
+
+    public void redisRefreshTokenSaveOrUpdate(String refreshToken, String loginId) {
+        refreshTokenRepository.findById(refreshToken)
+                .ifPresentOrElse(
+                        redisRefreshToken -> {
+                            redisRefreshToken.update(refreshToken);
+                            refreshTokenRepository.save(redisRefreshToken);
+                        },
+                        () -> {
+                            refreshTokenRepository.save(RefreshToken.create(refreshToken, loginId));
+                        }
+                );
+    }
+
+    public ResponseCookie setResponseCookie(String cookieName, String value, long maxAge) {
+        return ResponseCookie.from(cookieName, value)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(maxAge)
+                .build();
+    }
+
+
 }

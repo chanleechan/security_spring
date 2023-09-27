@@ -26,6 +26,9 @@ public class SpringSecurityConfig {
     @Value("${jwt.secret}")
     String secretKey;
 
+    @Value("${jwt.refreshSecret}")
+    String refreshKey;
+
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -39,7 +42,7 @@ public class SpringSecurityConfig {
         http.httpBasic().disable().csrf().disable()
                 //세션 사용 안함
                 //유저 패스워드 필터 접근 전 Jwt 필터로 접근
-                .addFilterBefore(new JwtFilter(secretKey, userService, util), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtFilter(secretKey, userService, util, refreshKey), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(request -> {
                     request.requestMatchers("/", "/images/**", "/user/login", "/user/logout", "/login/join", "/login/user", "/user/join", "/js/**", "/token/**", "/favicon")
                             .permitAll()

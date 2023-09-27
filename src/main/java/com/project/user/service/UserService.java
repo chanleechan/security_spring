@@ -24,20 +24,28 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
 
-    public boolean existUser(String userId) {
+    public boolean loginExistUser(String userId, String pw) {
+        if (user.findByUserId(userId).isPresent()) {
+            return encoder.matches(pw, user.findByUserId(userId).get().getPassword());
+        } else {
+            return false;
+        }
+    }
+
+    public boolean joinExistUser(String userId) {
         return user.existsByUserId(userId);
     }
 
     @Transactional(rollbackFor = {Exception.class})
     public ApiResponse save(String userId, String password) {
-        if (!existUser(userId)) {
+        if (!joinExistUser(userId)) {
             try {
                 User u = user.save(User.create(userId, encoder.encode(password), ""));
                 AuthCode code = userAuthService.findByAuthCode("01");
                 userAuth.save(new UserAuth(u, code));
                 Token token = jwtUtil.createToken(userId);
                 //jwtService.refreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
-                jwtService.redisRefreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
+                jwtUtil.redisRefreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
                 return ApiResponse.create("success", token);
             } catch (Exception e) {
                 throw e;

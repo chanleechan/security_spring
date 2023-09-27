@@ -1,6 +1,7 @@
 package com.project.security.jwt.component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.security.jwt.dto.Token;
 import com.project.user.domain.SecurityUser;
 import com.project.user.dto.ApiResponse;
 import com.project.user.service.SecurityService;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +32,8 @@ public class JwtFilter extends OncePerRequestFilter {
     private final String key;
     private final SecurityService userService;
     private final JwtUtil util;
+    private final String refreshKey;
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -51,7 +55,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                     String accessToken = requestCookieToString(getTokenCookie(request, "accessToken"), request, response, filterChain);
                     if (accessToken.isEmpty()) return;
-                    authorizationHeader = "Bearer " + accessToken;
+                    authorizationHeader = accessToken;
                 }
                 String token = authorizationHeader.replace("Bearer ", "");
                 if (util.tokenIsExpired(token, key)) {
@@ -62,8 +66,15 @@ public class JwtFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
                 //access 토큰 만료 exception
             } catch (ExpiredJwtException ex) {
-                setResponseMsg(response, SC_UNAUTHORIZED, MediaType.APPLICATION_JSON_VALUE);
-                new ObjectMapper().writeValue(response.getWriter(), ApiResponse.create("expire", "Access 토큰이 만료됨"));
+                //리프레시 토큰 확인한 후에 재발급
+                try {
+                    Token reissueToken = reissueToken(request, response, filterChain);
+                    setSecurityContext(reissueToken.getAccessToken(), request);
+                    filterChain.doFilter(request, response);
+                } catch (Exception e) {
+                    setResponseMsg(response, SC_UNAUTHORIZED, MediaType.APPLICATION_JSON_VALUE);
+                    new ObjectMapper().writeValue(response.getWriter(), ApiResponse.create("expire", "Access 토큰이 만료됨"));
+                }
                 //access 토큰 오류 exception
             } catch (Exception e) {
                 setResponseMsg(response, SC_BAD_REQUEST, MediaType.APPLICATION_JSON_VALUE);
@@ -106,6 +117,23 @@ public class JwtFilter extends OncePerRequestFilter {
         response.setStatus(status);
         response.setContentType(contentType);
         response.setCharacterEncoding("utf-8");
+    }
+
+    private Token reissueToken(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String refreshToken = requestCookieToString(getTokenCookie(request, "accessToken"), request, response, filterChain);
+            if (refreshToken.isEmpty()) throw new IllegalArgumentException("");
+            String loginId = util.tokenGetLoginId(refreshToken, refreshKey);
+            util.deleteRefreshToken(refreshToken);
+            Token token = util.createToken(loginId);
+            ResponseCookie accessCookie = util.setResponseCookie("accessToken", token.getAccessToken(), 3600L);
+            ResponseCookie refreshCookie = util.setResponseCookie("refreshToken", token.getRefreshToken(), 3600L);
+            response.addHeader("Set-Cookie", accessCookie.toString() + ";httpOnly");
+            response.addHeader("Set-Cookie", refreshCookie.toString() + ";httpOnly");
+            return token;
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
 }

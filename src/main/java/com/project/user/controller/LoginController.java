@@ -2,6 +2,7 @@ package com.project.user.controller;
 
 import com.project.security.jwt.component.JwtUtil;
 import com.project.security.jwt.dto.Token;
+import com.project.user.domain.User;
 import com.project.user.dto.ApiResponse;
 import com.project.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,44 +21,32 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
 
     private final UserService userService;
-    private final JwtUtil token;
+    private final JwtUtil jwtUtil;
 
     @PostMapping("/user")
     public ResponseEntity<ApiResponse> userLogin(@Param("userId") String userId, @Param("pw") String pw, HttpServletRequest request) {
-        boolean userValidation = userService.existUser(userId);
+        boolean userValidation = userService.loginExistUser(userId, pw);
         if (userValidation) {
-            Token jwtToken = token.createToken(userId);
-            ResponseCookie refreshTokenCookie =
-                    ResponseCookie.from("refreshToken", jwtToken.getRefreshToken())
-                            .httpOnly(true)
-                            .secure(false)
-                            .path("/")
-                            .maxAge(360)
-                            .build();
-            ResponseCookie accessTokenCookie =
-                    ResponseCookie.from("accessToken", jwtToken.getAccessToken())
-                            .httpOnly(true)
-                            .secure(false)
-                            .path("/")
-                            .maxAge(360)
-                            .build();
+            Token jwtToken = jwtUtil.createToken(userId);
+            ResponseCookie refreshTokenCookie = jwtUtil.setResponseCookie("refreshToken", jwtToken.getRefreshToken(), 3600L);
+            ResponseCookie accessTokenCookie = jwtUtil.setResponseCookie("accessToken", jwtToken.getAccessToken(), 3600L);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
                     .body(ApiResponse.create("success", jwtToken.getAccessToken()));
         } else {
-            return ResponseEntity.badRequest().body(ApiResponse.create("fail", ""));
+            return ResponseEntity.badRequest().body(ApiResponse.create("실패", "아이디나 비밀번호가 올바르지 않습니다."));
         }
     }
 
     @PostMapping("/join")
-    public ResponseEntity<ApiResponse> join(String userId, String password) {
-        if (userId.isEmpty() || password.isEmpty()) {
+    public ResponseEntity<ApiResponse> join(User user) {
+        if (user.getUserId().isEmpty() || user.getPassword().isEmpty()) {
             throw new IllegalArgumentException("가입하려는 정보가 유효하지 않습니다.");
         } else {
             try {
-                return ResponseEntity.ok(userService.save(userId, password));
+                return ResponseEntity.ok(userService.save(user.getUserId(), user.getPassword()));
             } catch (Exception e) {
                 return ResponseEntity.ok(ApiResponse.create("fail", e.getMessage()));
             }

@@ -9,5 +9,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "userId")
     Optional<User> findByUserId(String userId);
 
+    Boolean existsByUserIdAndPassword(String userId, String pw);
+
     Boolean existsByUserId(String userId);
 }

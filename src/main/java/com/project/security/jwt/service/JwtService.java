@@ -26,9 +26,6 @@ public class JwtService {
     private final RefreshTokenRepository redisRefreshTokenRepository;
 
     public ApiResponse validateRefreshToken(String refreshToken) {
-       /* JwtRefreshToken refresh = Optional.ofNullable(jwtRefreshTokenRepository.findByRefreshToken(refreshToken))
-                .orElseThrow(() -> new NoSuchElementException("no search refresh Token : "));
-        String createAccessToken = util.validateRefreshToken(refresh);*/
         RefreshToken redisRefreshToken = redisRefreshTokenRepository.findById(refreshToken)
                 .orElseThrow(() -> new NoSuchElementException("no search refresh Token : "));
         String createAccessToken = util.validateRedisRefreshToken(redisRefreshToken);
@@ -60,19 +57,6 @@ public class JwtService {
                         },
                         () -> {
                             jwtRefreshTokenRepository.save(JwtRefreshToken.create(refreshToken, loginId));
-                        }
-                );
-    }
-
-    public void redisRefreshTokenSaveOrUpdate(String refreshToken, String loginId) {
-        redisRefreshTokenRepository.findById(refreshToken)
-                .ifPresentOrElse(
-                        redisRefreshToken -> {
-                            redisRefreshToken.update(refreshToken);
-                            redisRefreshTokenRepository.save(redisRefreshToken);
-                        },
-                        () -> {
-                            redisRefreshTokenRepository.save(RefreshToken.create(refreshToken, loginId));
                         }
                 );
     }

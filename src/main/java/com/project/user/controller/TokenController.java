@@ -25,4 +25,13 @@ public class TokenController {
             return ResponseEntity.ok(new ApiResponse<>("fail", e.getMessage()));
         }
     }
+
+ /*   @GetMapping("/test")
+    public ResponseEntity<String> test(HttpServletRequest request, HttpServletResponse response) {
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", "access").build();
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "refresh").build();
+        response.addHeader("Set-Cookie", accessCookie + ";httpOnly");
+        response.addHeader("Set-Cookie", refreshCookie + ";httpOnly");
+        return ResponseEntity.ok("success");
+    }*/
 }

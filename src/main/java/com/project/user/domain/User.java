@@ -1,5 +1,6 @@
 package com.project.user.domain;
 
+import groovyjarjarantlr4.v4.runtime.misc.NotNull;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +19,11 @@ public class User {
     private Long userNo;
 
     @Column
+    @NotNull
     private String userId;
 
     @Column
+    @NotNull
     private String password;
 
     @Column
