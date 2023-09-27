@@ -5,10 +5,10 @@ import com.project.security.jwt.dto.Token;
 import com.project.security.jwt.service.JwtService;
 import com.project.user.domain.*;
 import com.project.user.dto.ApiResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -28,7 +28,7 @@ public class UserService {
         return user.existsByUserId(userId);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = {Exception.class})
     public ApiResponse save(String userId, String password) {
         if (!existUser(userId)) {
             try {
@@ -36,10 +36,11 @@ public class UserService {
                 AuthCode code = userAuthService.findByAuthCode("01");
                 userAuth.save(new UserAuth(u, code));
                 Token token = jwtUtil.createToken(userId);
-                jwtService.refreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
+                //jwtService.refreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
+                jwtService.redisRefreshTokenSaveOrUpdate(token.getRefreshToken(), userId);
                 return ApiResponse.create("success", token);
             } catch (Exception e) {
-                return ApiResponse.create("fail", e.getMessage());
+                throw e;
             }
         } else {
             return ApiResponse.create("fail", "중복 회원이 있습니다.");

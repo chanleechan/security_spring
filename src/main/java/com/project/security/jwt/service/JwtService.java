@@ -1,5 +1,7 @@
 package com.project.security.jwt.service;
 
+import com.project.redis.domain.RefreshToken;
+import com.project.redis.domain.RefreshTokenRepository;
 import com.project.security.jwt.component.JwtUtil;
 import com.project.user.domain.JwtRefreshToken;
 import com.project.user.domain.JwtRefreshTokenRepository;
@@ -10,7 +12,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -18,11 +23,15 @@ import java.util.*;
 public class JwtService {
     private final JwtUtil util;
     private final JwtRefreshTokenRepository jwtRefreshTokenRepository;
+    private final RefreshTokenRepository redisRefreshTokenRepository;
 
     public ApiResponse validateRefreshToken(String refreshToken) {
-        JwtRefreshToken refresh = Optional.ofNullable(jwtRefreshTokenRepository.findByRefreshToken(refreshToken))
+       /* JwtRefreshToken refresh = Optional.ofNullable(jwtRefreshTokenRepository.findByRefreshToken(refreshToken))
                 .orElseThrow(() -> new NoSuchElementException("no search refresh Token : "));
-        String createAccessToken = util.validateRefreshToken(refresh);
+        String createAccessToken = util.validateRefreshToken(refresh);*/
+        RefreshToken redisRefreshToken = redisRefreshTokenRepository.findById(refreshToken)
+                .orElseThrow(() -> new NoSuchElementException("no search refresh Token : "));
+        String createAccessToken = util.validateRedisRefreshToken(redisRefreshToken);
         return createRefreshJson(createAccessToken);
     }
 
@@ -38,7 +47,7 @@ public class JwtService {
             map.put("accessToken", accessToken);
 
         }
-        return ApiResponse.create("fail", map);
+        return ApiResponse.create("success", map);
     }
 
     //refresh 토큰 재 생성 or db 업데이트
@@ -51,6 +60,19 @@ public class JwtService {
                         },
                         () -> {
                             jwtRefreshTokenRepository.save(JwtRefreshToken.create(refreshToken, loginId));
+                        }
+                );
+    }
+
+    public void redisRefreshTokenSaveOrUpdate(String refreshToken, String loginId) {
+        redisRefreshTokenRepository.findById(refreshToken)
+                .ifPresentOrElse(
+                        redisRefreshToken -> {
+                            redisRefreshToken.update(refreshToken);
+                            redisRefreshTokenRepository.save(redisRefreshToken);
+                        },
+                        () -> {
+                            redisRefreshTokenRepository.save(RefreshToken.create(refreshToken, loginId));
                         }
                 );
     }

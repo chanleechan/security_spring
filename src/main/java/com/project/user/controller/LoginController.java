@@ -56,7 +56,11 @@ public class LoginController {
         if (userId.isEmpty() || password.isEmpty()) {
             throw new IllegalArgumentException("가입하려는 정보가 유효하지 않습니다.");
         } else {
-            return ResponseEntity.ok(userService.save(userId, password));
+            try {
+                return ResponseEntity.ok(userService.save(userId, password));
+            } catch (Exception e) {
+                return ResponseEntity.ok(ApiResponse.create("fail", e.getMessage()));
+            }
         }
     }
 

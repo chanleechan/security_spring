@@ -1,7 +1,5 @@
 package com.project.security.jwt.component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.user.dto.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +17,7 @@ public class AuthenticationEntryPointHandlerCustom implements AuthenticationEntr
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("utf-8");
-        new ObjectMapper().writeValue(response.getWriter(), ApiResponse.create("fail", "인증되지 않은 사용자입니다."));
+        //new ObjectMapper().writeValue(response.getWriter(), ApiResponse.create("fail", "인증되지 않은 사용자입니다."));
+        response.sendRedirect("/");
     }
 }

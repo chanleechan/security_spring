@@ -14,6 +14,10 @@ $(() => {
     $("#loginBtn").click(() => {
         login();
     });
+
+    $("#refresh").click(() => {
+        refresh();
+    });
 });
 
 
@@ -71,4 +75,17 @@ function joinValidationCheck() {
 
 function logout() {
     location.href = "/user/logout";
+}
+
+
+function refresh() {
+    $.ajax({
+        type: "post",
+        url: "/token/refresh",
+        success: ((data) => {
+            console.log(data);
+        }), error(e) {
+            console.log(e);
+        }
+    })
 }
