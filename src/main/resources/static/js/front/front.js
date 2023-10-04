@@ -19,9 +19,9 @@ $(() => {
         refresh();
     });
 
-    $("#reissue").click(() => {
-        reissue();
-    });
+    /*   $("#reissue").click(() => {
+           reissue();
+       });*/
 });
 
 
