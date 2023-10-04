@@ -19,7 +19,7 @@ $(() => {
         refresh();
     });
 
-    $("#test").click(() => {
+    $("#reissue").click(() => {
         reissue();
     });
 });

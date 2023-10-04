@@ -1,5 +1,7 @@
 package com.project.security.jwt.component;
 
+import com.project.redis.domain.BlackListToken;
+import com.project.redis.domain.BlackListTokenRepository;
 import com.project.redis.domain.RefreshToken;
 import com.project.redis.domain.RefreshTokenRepository;
 import com.project.security.jwt.dto.Token;
@@ -9,6 +11,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -19,6 +22,7 @@ import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtUtil {
 
     @Value("${jwt.secret}")
@@ -29,6 +33,7 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long tokenValidityInMilliseconds;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final BlackListTokenRepository blackListTokenRepository;
 
     //Key 생성
     public Key setKey(String secret) {
@@ -52,6 +57,7 @@ public class JwtUtil {
 
     //토큰 만료시간 체크
     public boolean tokenIsExpired(String token, String secretKey) {
+        log.info("토큰 만료확인");
         Date expiredDate = getClaims(token, secretKey).getExpiration();
         // Token의 만료 날짜가 지금보다 이전인지 check
         return expiredDate.before(new Date());
@@ -139,6 +145,18 @@ public class JwtUtil {
                 .path("/")
                 .maxAge(maxAge)
                 .build();
+    }
+
+    //블랙리스트 추가
+    public void addBlackList(String accessToken, String userId) {
+        log.info("블랙리스트 추가 \n 엑세스 토큰 : {}\n 회원 아이디 : {}", accessToken, userId);
+        blackListTokenRepository.save(BlackListToken.create(accessToken, userId));
+    }
+
+    public boolean existBlackList(String accessToken) {
+        log.info("블랙리스트 조회 \n 엑세스 토큰 : {}\n", accessToken);
+        //Iterable<BlackListToken> t = blackListTokenRepository.findAll();
+        return blackListTokenRepository.findById(accessToken).isPresent();
     }
 
 

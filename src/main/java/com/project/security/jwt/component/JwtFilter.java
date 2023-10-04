@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -28,6 +29,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
     private final String key;
     private final SecurityService userService;
@@ -41,8 +43,6 @@ public class JwtFilter extends OncePerRequestFilter {
         //refresh token 일 경우
         if (servletPath.equals("/token/refresh")) {
             filterChain.doFilter(request, response);
-        } else if (servletPath.equals("/user/logout")) {
-            //TODO 로그아웃 관련 blackList 추가해야함
         } else {
             try {
                 //토큰 가져오기
@@ -58,12 +58,21 @@ public class JwtFilter extends OncePerRequestFilter {
                     authorizationHeader = accessToken;
                 }
                 String token = authorizationHeader.replace("Bearer ", "");
-                if (util.tokenIsExpired(token, key)) {
+                if (util.existBlackList(token)) {
                     filterChain.doFilter(request, response);
-                    return;
+                } else {
+                    if (util.tokenIsExpired(token, key)) {
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+                    if (servletPath.equals("/user/logout")) {
+                        util.addBlackList(token, util.tokenGetLoginId(token, key));
+                        filterChain.doFilter(request, response);
+                    }
+
+                    setSecurityContext(token, request);
+                    filterChain.doFilter(request, response);
                 }
-                setSecurityContext(token, request);
-                filterChain.doFilter(request, response);
                 //access 토큰 만료 exception
             } catch (ExpiredJwtException ex) {
                 //리프레시 토큰 확인한 후에 재발급
@@ -119,6 +128,7 @@ public class JwtFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("utf-8");
     }
 
+    //토큰 재발행
     private Token reissueToken(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             String refreshToken = requestCookieToString(getTokenCookie(request, "accessToken"), request, response, filterChain);
