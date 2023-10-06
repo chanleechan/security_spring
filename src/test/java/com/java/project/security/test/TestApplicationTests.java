@@ -73,5 +73,12 @@ class TestApplicationTests {
         refreshTokenRepository.deleteById(refreshToken);
     }
 
+    @Test
+    void socialTest() {
+        User user = userService.findByUserId("a");
+       /* SocialUser su = user.getSocialNo();
+        long id = su.getUserNo();*/
+    }
+
 
 }

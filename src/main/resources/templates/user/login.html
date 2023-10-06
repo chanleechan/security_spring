@@ -4,6 +4,7 @@
       layout:decorate="~{layout/front-layout}">
 <head>
     <script th:src="@{/js/front/front.js}"></script>
+    <script th:src="@{/js/front/socialLogin.js}"></script>
 </head>
 <div layout:fragment="content">
     <form id="loginForm" method="post" action="/user/login">
@@ -18,6 +19,7 @@
         <button type="button" id="loginBtn">로그인</button>
     </form>
     <button type="button" id="joinBtn">가입</button>
+    <button type="button" id="googleLoginBtn">구글 로긴</button>
 </div>
 
 </html>

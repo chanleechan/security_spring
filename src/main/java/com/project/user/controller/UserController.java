@@ -36,11 +36,4 @@ public class UserController {
     public String join() {
         return "user/join";
     }
-
-    @GetMapping("/logout")
-    public String logout(String accessToken, String loginId) {
-        
-        return "redirect:/user/login";
-    }
-
 }

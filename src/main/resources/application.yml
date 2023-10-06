@@ -31,6 +31,17 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
     date-format: "yyyy-MM-dd HH:mm:ss"
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 768400866179-hicu1f04q37oksgqqm69pql8jrsn1bn3.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+            redirect-uri: http://localhost:8080/login/oauth2/google
 
 logging:
   level:

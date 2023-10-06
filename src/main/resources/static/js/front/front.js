@@ -22,6 +22,9 @@ $(() => {
     /*   $("#reissue").click(() => {
            reissue();
        });*/
+    $("#googleLoginBtn").click(() => {
+        googleLogin();
+    });
 });
 
 
@@ -78,7 +81,15 @@ function joinValidationCheck() {
 }
 
 function logout() {
-    location.href = "/user/logout";
+    $.ajax({
+        type: "get",
+        url: "/login/logout",
+        success: ((data) => {
+            if (data.msg === "success") location.href = "/user/login"
+        }), error(e) {
+            console.log(e);
+        }
+    });
 }
 
 

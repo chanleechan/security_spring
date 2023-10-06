@@ -65,11 +65,12 @@ public class JwtFilter extends OncePerRequestFilter {
                         filterChain.doFilter(request, response);
                         return;
                     }
-                    if (servletPath.equals("/user/logout")) {
+                    if (servletPath.equals("/login/logout")) {
                         util.addBlackList(token, util.tokenGetLoginId(token, key));
+                        deleteSecurityContext();
                         filterChain.doFilter(request, response);
+                        return;
                     }
-
                     setSecurityContext(token, request);
                     filterChain.doFilter(request, response);
                 }
@@ -101,6 +102,14 @@ public class JwtFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.setContext(context);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+    }
+
+    private void deleteSecurityContext() {
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(null, null, null);
         SecurityContextHolder.setContext(context);
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     }
